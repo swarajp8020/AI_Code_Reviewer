@@ -1,14 +1,13 @@
 # 🩺 Gemini Code Doctor
 
-An AI-powered automated debugging tool that fixes Python code in real-time.
-Built with **FastAPI** (Backend), **Streamlit** (Frontend), and **Google Gemini 2.5** (LLM).
+**An AI-powered Microservice for Automated Code Debugging.**
+*Deployed with FastAPI (Backend) and Streamlit (Frontend).*
 
-## 🚀 Architecture
-This project uses a Microservices architecture:
-- **Frontend:** Streamlit web interface for user interaction.
-- **Backend:** FastAPI server that handles validation and error management.
-- **AI Engine:** Google Gemini 2.5 via API for logic analysis and code correction.
-- **Resilience:** Implements automatic retry logic (exponential backoff) to handle API instability.
+## 🏗️ Architecture
+This project demonstrates a production-grade **Microservices Architecture**:
+* **The Brain (Backend):** A FastAPI server that handles validation (Pydantic), error handling, and LLM orchestration (Google Gemini 2.5).
+* **The Face (Frontend):** A Streamlit interface that consumes the backend API via HTTP requests.
+* **Resilience:** Implements a custom retry mechanism with exponential backoff to handle transient API failures.
 
 ## 🛠️ Tech Stack
 - **Python 3.10+**
@@ -16,6 +15,16 @@ This project uses a Microservices architecture:
 - **Pydantic** (Data Validation)
 - **Streamlit** (UI/UX)
 - **Google Generative AI** (LLM)
+
+
+## 🚀 Quick Start
+1.  **Clone the repo:**
+    `git clone https://github.com/swarajp8020/AI_Code_Reviewer.git`
+2.  **Install dependencies:**
+    `pip install -r requirements.txt`
+3.  **Run the System:**
+    * Backend: `python backend/server.py`
+    * Frontend: `streamlit run frontend/app.py`
 
 ## 📦 Installation
 
