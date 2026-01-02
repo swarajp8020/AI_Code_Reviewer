@@ -49,4 +49,4 @@ cd frontend
 python -m streamlit run app.py
 
 5. 📸 Screenshots
-![alt text](image.png)
+<img width="1605" height="952" alt="image" src="https://github.com/user-attachments/assets/776456be-f0a6-47f7-98df-80738b7726bd" />
