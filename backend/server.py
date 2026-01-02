@@ -41,45 +41,57 @@ def greet():
 
 # --- THE CORE LOGIC ---
 @app.post("/review")
+class CodeRequest(BaseModel):
+    code: str
+    task: str = "fix_python" # Default
+#THE UPGRADED LOGIC
+@app.post("/review")
 def review_code(request: CodeRequest):
-    logging.info(f"Received Request: {request.task} (Length: {len(request.code)})")
-    
-    # Dynamic Prompting (Ready for your future upgrade)
-    instruction = "Fix the bugs in this code."
-    if request.task == "convert_to_java":
-        instruction = "Convert this code to production-ready Java."
-    elif request.task == "convert_to_python":
-        instruction = "Convert this code to clean Python."
+    logging.info(f"Received Request: {request.task}")
 
+    prompts = {
+        "fix_python": "Fix this Python code. Explain the bugs.",
+        "fix_java": "Fix this Java code. Explain the bugs.",
+        "fix_cpp": "Fix this C++ code. Explain the bugs.",
+        "fix_go": "Fix this Go code. Explain the bugs.",
+    }
+    
+    # Get the instruction (Default to Python if unknown)
+    instruction = prompts.get(request.task, "Fix this code.")
+
+    # B. The "Smarter" Prompt
     prompt = f"""
     You are a Senior Developer. {instruction}
-    Return ONLY a JSON object with this format:
-    {{ "fixed_code": "YOUR_CODE_HERE" }}
     
-    The Code:
+    Return ONLY a JSON object with this EXACT format:
+    {{
+        "fixed_code": "PUT_THE_FIXED_CODE_HERE",
+        "bug_report": "Explain WHAT was wrong and WHY it caused an error."
+    }}
+    
+    The Buggy Code:
     {request.code}
     """
-    
+
     attempts = 0
-    max_retries = 2
-    
-    while attempts < max_retries:
+    while attempts < 2:
         try:
             logging.info(f"Attempt {attempts+1}...")
             response = model.generate_content(prompt)
             
             # Clean and Parse
-            cleaned_text = response.text.replace("```json", "").replace("```", "").strip()
-            data = json.loads(cleaned_text)
+            text = response.text.replace("```json", "").replace("```", "").strip()
+            data = json.loads(text)
             return data
 
         except Exception as e:
-            logging.error(f"Attempt {attempts+1} failed: {e}")
+            logging.error(f"Error: {e}")
             attempts += 1
-            # We DO NOT return here. We let the loop run again.
-
-    # If we exit the loop, it means we failed all retries
-    return {"fixed_code": "# Error: Server busy. Please try again."}
+            
+    return {
+        "fixed_code": request.code, 
+        "bug_report": "Server is busy or AI failed to format JSON. Please try again."
+    }
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
