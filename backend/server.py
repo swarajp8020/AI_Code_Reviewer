@@ -6,11 +6,13 @@ import uvicorn
 import logging
 import json
 
+# --- 1. SETUP LOGGING & CONFIG ---
 logging.basicConfig(
     level=logging.INFO, 
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
+# Get Key from Cloud Environment OR Local Config
 try:
     from config import GEMINI_API_KEY
     api_key = GEMINI_API_KEY
@@ -25,9 +27,10 @@ model = genai.GenerativeModel("gemini-2.5-flash")
 
 app = FastAPI()
 
+# --- 2. DEFINE THE DATA MODEL ---
 class CodeRequest(BaseModel):
     code: str
-    task: str = "fix"  # Default to 'fix' so it works with old & new frontends
+    task: str = "fix_python" # Default
 
     @field_validator('code')
     def check_code_not_empty(cls, v):
@@ -39,16 +42,12 @@ class CodeRequest(BaseModel):
 def greet():
     return {"message": "Gemini AI Server is Running 🟢"}
 
-# --- THE CORE LOGIC ---
-@app.post("/review")
-class CodeRequest(BaseModel):
-    code: str
-    task: str = "fix_python" # Default
-#THE UPGRADED LOGIC
+# --- 3. THE SMART LOGIC (V2.0) ---
 @app.post("/review")
 def review_code(request: CodeRequest):
     logging.info(f"Received Request: {request.task}")
 
+    # A. Smart Language Map
     prompts = {
         "fix_python": "Fix this Python code. Explain the bugs.",
         "fix_java": "Fix this Java code. Explain the bugs.",
@@ -56,10 +55,10 @@ def review_code(request: CodeRequest):
         "fix_go": "Fix this Go code. Explain the bugs.",
     }
     
-    # Get the instruction (Default to Python if unknown)
+    # Get instruction (Default to Python if unknown)
     instruction = prompts.get(request.task, "Fix this code.")
 
-    # B. The "Smarter" Prompt
+    # B. The "Smarter" Prompt with Explanations
     prompt = f"""
     You are a Senior Developer. {instruction}
     
@@ -74,7 +73,9 @@ def review_code(request: CodeRequest):
     """
 
     attempts = 0
-    while attempts < 2:
+    max_retries = 2
+
+    while attempts < max_retries:
         try:
             logging.info(f"Attempt {attempts+1}...")
             response = model.generate_content(prompt)
@@ -88,6 +89,7 @@ def review_code(request: CodeRequest):
             logging.error(f"Error: {e}")
             attempts += 1
             
+    # Fallback if AI fails twice
     return {
         "fixed_code": request.code, 
         "bug_report": "Server is busy or AI failed to format JSON. Please try again."
