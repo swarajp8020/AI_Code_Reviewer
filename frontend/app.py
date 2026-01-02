@@ -6,7 +6,7 @@ st.set_page_config(page_title="Gemini Code Doctor", page_icon="🩺", layout="wi
 st.title("🩺 Gemini Code Doctor V2.0")
 st.markdown("### AI-Powered Debugger for Python, Java, C++, and Go")
 
-# --- 1. LANGUAGE SELECTOR ---
+# ---  LANGUAGE SELECTOR ---
 col1, col2 = st.columns([1, 3]) # Split screen for better UI
 
 with col1:
@@ -26,7 +26,7 @@ task_map = {
 with col2:
     code_input = st.text_area("Paste your broken code here:", height=300)
 
-# --- 2. ACTION BUTTON ---
+# --- ACTION BUTTON ---
 if st.button("Analyze & Explain 🧠", type="primary"):
     if not code_input:
         st.warning("Please paste some code first!")
@@ -45,7 +45,7 @@ if st.button("Analyze & Explain 🧠", type="primary"):
                 if response.status_code == 200:
                     data = response.json()
                     
-                    # --- 3. SHOW RESULTS (NEW LAYOUT) ---
+                    # --- SHOW RESULTS (NEW LAYOUT) ---
                     st.success("Analysis Complete!")
                     
                     # Create two columns: Explanation (Left) vs Fixed Code (Right)
