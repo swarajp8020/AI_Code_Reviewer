@@ -21,8 +21,8 @@ if st.button("Analyze & Fix 🚑", type="primary"):
             try:
                 # connecting to the local backend
                 response = requests.post(
-                    "http://127.0.0.1:8000/review", 
-                    json={"code": code_input}
+                    "https://gemini-api-swaraj.onrender.com/review", 
+                    json={"code": code_input, "task": "fix"}
                 )
                 
                 if response.status_code == 200:
