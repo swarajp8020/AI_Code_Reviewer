@@ -1,24 +1,25 @@
 import streamlit as st
 import requests
 
+# Page Config
 st.set_page_config(page_title="Gemini Code Doctor", page_icon="🩺", layout="centered")
 
-# --- HEADER ---
+# Header
 st.title("🩺 Gemini Code Doctor")
 st.write("### AI-Powered Python Debugger")
 st.info("Built with FastAPI, Streamlit, and Google Gemini 2.5")
 
-# --- INPUT AREA ---
+# Input Area
 code_input = st.text_area("Paste your broken Python code here:", height=250)
 
-# --- ACTION BUTTON ---
+# Action Button
 if st.button("Analyze & Fix 🚑", type="primary"):
     if not code_input:
         st.warning("⚠️ Please paste some code first!")
     else:
         with st.spinner("🤖 AI is analyzing your logic..."):
             try:
-                # connect to the local backend
+                # connecting to the local backend
                 response = requests.post(
                     "http://127.0.0.1:8000/review", 
                     json={"code": code_input}
@@ -29,7 +30,6 @@ if st.button("Analyze & Fix 🚑", type="primary"):
                     fixed_code = data.get("fixed_code", "# No code returned")
                     
                     st.success("✅ Analysis Complete!")
-                    
                     st.subheader("Your Fixed Code:")
                     st.code(fixed_code, language="python")
                 else:
