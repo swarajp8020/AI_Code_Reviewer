@@ -35,11 +35,12 @@ if st.button("Analyze & Explain 🧠", type="primary"):
             try:
                 # Update URL to your RENDER URL
                 response = requests.post(
-                    "https://gemini-api-swaraj.onrender.com/review", 
+                    "https://gemini-api-swaraj.onrender.com/review", # (Or localhost if testing)
                     json={
                         "code": code_input,
-                        "task": task_map[language] # Send the mapped ID
-                    }
+                        "task": task_map[language]
+                    },
+                    headers={"X-Service-Token": "SWARAJ_SECURE_2026"} # <--- THE KEY
                 )
                 
                 if response.status_code == 200:
