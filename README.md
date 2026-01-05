@@ -1,61 +1,48 @@
-# 🩺 Gemini Code Doctor
+# 🩺 Gemini Code Doctor - https://aicodereviewer-swaraj.streamlit.app/
 
-**An AI-powered Microservice for Automated Code Debugging.**
-*Deployed with FastAPI (Backend) and Streamlit (Frontend).*
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.109.0-green)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.31.0-red)
+![Status](https://img.shields.io/badge/Status-Live%20Demo-success)
 
-## 🏗️ Architecture
-This project demonstrates a production-grade **Microservices Architecture**:
-* **The Brain (Backend):** A FastAPI server that handles validation (Pydantic), error handling, and LLM orchestration (Google Gemini 2.5).
-* **The Face (Frontend):** A Streamlit interface that consumes the backend API via HTTP requests.
-* **Resilience:** Implements a custom retry mechanism with exponential backoff to handle transient API failures.
+**An Intelligent, AI-Powered Code Migration & Debugging Assistant.**
+*Capable of fixing bugs and converting legacy code across Python, Java, C++, and Go.*
 
-## 🛠️ Tech Stack
-- **Python 3.10+**
-- **FastAPI** (High-performance API)
-- **Pydantic** (Data Validation)
-- **Streamlit** (UI/UX)
-- **Google Generative AI** (LLM)
+🔗 **[Live Demo Application](https://aicodereviewer-swaraj.streamlit.app/)**
 
+---
 
-## 🚀 Quick Start
-1.  **Clone the repo:**
-    `git clone https://github.com/swarajp8020/AI_Code_Reviewer.git`
-2.  **Install dependencies:**
-    `pip install -r requirements.txt`
-3.  **Run the System:**
-    * Backend: `python backend/server.py`
-    * Frontend: `streamlit run frontend/app.py`
+## 🏗️ System Architecture
 
-## 📦 Installation
+This project implements a **Cloud-Native Microservices Architecture** to decouple the user interface from the logic engine.
 
-1. Clone the repository:
-   ```bash
-   git clone [https://github.com/YOUR_USERNAME/AI_Code_Reviewer.git](https://github.com/YOUR_USERNAME/AI_Code_Reviewer.git)
+1.  **Frontend (The Face):** Built with **Streamlit**, deployed on Streamlit Community Cloud. It handles user input and displays real-time feedback.
+2.  **Backend (The Brain):** A high-performance **FastAPI** server hosted on **Render**. It manages:
+    * **Prompt Engineering:** Dynamic context injection based on the selected language.
+    * **Resilience:** Custom retry logic with exponential backoff to handle LLM latency.
+    * **Validation:** Pydantic models ensure rigorous data schema enforcement.
+3.  **AI Engine:** Powered by **Google Gemini 2.5 (Flash)** for low-latency code reasoning.
 
-   Install dependencies:
+---
 
-2. Bash
+## ⚡ Features
 
-pip install -r requirements.txt
-Configure API Key:
+* **🐞 Auto-Debugging:** Instantly identifies syntax and logic errors.
+* **🧠 Deep Explanations:** Returns a "Bug Report" explaining *why* the code failed, not just the fix.
+* **🔄 Multi-Language Support:**
+    * 🐍 Python
+    * ☕ Java
+    * 🚀 C++
+    * 🐹 Go
+* **☁️ Production Ready:** Fully deployed with separate frontend/backend services communicating via REST API.
 
-3. Create a file backend/config.py
+---
 
-Add your key: GEMINI_API_KEY = "your_key_here"
+## 🛠️ Installation & Local Setup
 
-4. How to Run
-Terminal 1 (Backend):
+If you want to run this locally:
 
-Bash
-
-cd backend
-python server.py
-Terminal 2 (Frontend):
-
-Bash
-
-cd frontend
-python -m streamlit run app.py
-
-5. 📸 Screenshots
-<img width="1605" height="952" alt="image" src="https://github.com/user-attachments/assets/776456be-f0a6-47f7-98df-80738b7726bd" />
+**1. Clone the Repository**
+```bash
+git clone [https://github.com/swarajp8020/AI_Code_Reviewer.git](https://github.com/swarajp8020/AI_Code_Reviewer.git)
+cd AI_Code_Reviewer
