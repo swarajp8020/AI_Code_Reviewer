@@ -1,8 +1,11 @@
 import os
 import google.generativeai as genai
-from fastapi import FastAPI, HTTPException, Security, Depends
+from fastapi import FastAPI, HTTPException, Security, Depends, Request
 from fastapi.security.api_key import APIKeyHeader
 from pydantic import BaseModel, field_validator
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import uvicorn
 import logging
 import json
@@ -42,8 +45,13 @@ async def get_api_key(api_key_header: str = Security(api_key_header)):
             detail="⛔ Access Forbidden: Invalid or Missing Service Token"
         )
 
-# --- 3. INITIALIZE APP ---
+# --- 3. INITIALIZE APP & LIMITER (FIXED) ---
 app = FastAPI()
+
+# Setup the Bouncer (Rate Limiter)
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter # <--- MISSING LINE 1: Connect Bouncer to App
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler) # <--- MISSING LINE 2: Handle the error
 
 # --- 4. DATA MODELS ---
 class CodeRequest(BaseModel):
@@ -61,9 +69,10 @@ class CodeRequest(BaseModel):
 def greet():
     return {"message": "Gemini AI Server is Running 🟢"}
 
-@app.post("/review", dependencies=[Depends(get_api_key)]) # <--- LOCKED 🔒
-def review_code(request: CodeRequest):
-    logging.info(f"Received Request: {request.task}")
+@app.post("/review", dependencies=[Depends(get_api_key)]) 
+@limiter.limit("5/minute")
+def review_code(request: Request, code_request: CodeRequest):
+    logging.info(f"Received Request: {code_request.task}")
 
     prompts = {
         "fix_python": "Fix this Python code. Explain the bugs.",
@@ -72,40 +81,34 @@ def review_code(request: CodeRequest):
         "fix_go": "Fix this Go code. Explain the bugs.",
     }
     
-    instruction = prompts.get(request.task, "Fix this code.")
+    instruction = prompts.get(code_request.task, "Fix this code.")
 
     prompt = f"""
     You are a Senior Developer. {instruction}
-    
     Return ONLY a JSON object with this EXACT format:
     {{
         "fixed_code": "PUT_THE_FIXED_CODE_HERE",
         "bug_report": "Explain WHAT was wrong and WHY it caused an error."
     }}
-    
     The Buggy Code:
-    {request.code}
+    {code_request.code}
     """
 
     attempts = 0
-    max_retries = 2
-
-    while attempts < max_retries:
+    while attempts < 2:
         try:
             logging.info(f"Attempt {attempts+1}...")
             response = model.generate_content(prompt)
-            
             text = response.text.replace("```json", "").replace("```", "").strip()
             data = json.loads(text)
             return data
-
         except Exception as e:
             logging.error(f"Error: {e}")
             attempts += 1
             
     return {
-        "fixed_code": request.code, 
-        "bug_report": "Server is busy or AI failed to format JSON. Please try again."
+        "fixed_code": code_request.code,
+        "bug_report": "Server is busy or AI failed to format JSON."
     }
 
 if __name__ == "__main__":
