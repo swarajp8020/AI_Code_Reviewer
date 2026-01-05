@@ -1,6 +1,7 @@
 import os
 import google.generativeai as genai
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Security, Depends
+from fastapi.security.api_key import APIKeyHeader
 from pydantic import BaseModel, field_validator
 import uvicorn
 import logging
@@ -12,7 +13,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-# Get Key from Cloud Environment OR Local Config
+# Get Gemini Key
 try:
     from config import GEMINI_API_KEY
     api_key = GEMINI_API_KEY
@@ -25,9 +26,26 @@ if not api_key:
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel("gemini-2.5-flash")
 
+# --- 2. SECURITY CONFIGURATION (THE LOCK) 🔒 ---
+API_KEY_NAME = "X-Service-Token"
+api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
+
+# The Secret Password
+INTERNAL_TOKEN = os.getenv("INTERNAL_TOKEN", "SWARAJ_SECURE_2026")
+
+async def get_api_key(api_key_header: str = Security(api_key_header)):
+    if api_key_header == INTERNAL_TOKEN:
+        return api_key_header
+    else:
+        raise HTTPException(
+            status_code=403, 
+            detail="⛔ Access Forbidden: Invalid or Missing Service Token"
+        )
+
+# --- 3. INITIALIZE APP ---
 app = FastAPI()
 
-# --- 2. DEFINE THE DATA MODEL ---
+# --- 4. DATA MODELS ---
 class CodeRequest(BaseModel):
     code: str
     task: str = "fix_python" # Default
@@ -38,16 +56,15 @@ class CodeRequest(BaseModel):
             raise ValueError('Code cannot be empty/blank!')
         return v
 
+# --- 5. ENDPOINTS ---
 @app.get("/")
 def greet():
     return {"message": "Gemini AI Server is Running 🟢"}
 
-# --- 3. THE SMART LOGIC (V2.0) ---
-@app.post("/review")
+@app.post("/review", dependencies=[Depends(get_api_key)]) # <--- LOCKED 🔒
 def review_code(request: CodeRequest):
     logging.info(f"Received Request: {request.task}")
 
-    # A. Smart Language Map
     prompts = {
         "fix_python": "Fix this Python code. Explain the bugs.",
         "fix_java": "Fix this Java code. Explain the bugs.",
@@ -55,10 +72,8 @@ def review_code(request: CodeRequest):
         "fix_go": "Fix this Go code. Explain the bugs.",
     }
     
-    # Get instruction (Default to Python if unknown)
     instruction = prompts.get(request.task, "Fix this code.")
 
-    # B. The "Smarter" Prompt with Explanations
     prompt = f"""
     You are a Senior Developer. {instruction}
     
@@ -80,7 +95,6 @@ def review_code(request: CodeRequest):
             logging.info(f"Attempt {attempts+1}...")
             response = model.generate_content(prompt)
             
-            # Clean and Parse
             text = response.text.replace("```json", "").replace("```", "").strip()
             data = json.loads(text)
             return data
@@ -89,7 +103,6 @@ def review_code(request: CodeRequest):
             logging.error(f"Error: {e}")
             attempts += 1
             
-    # Fallback if AI fails twice
     return {
         "fixed_code": request.code, 
         "bug_report": "Server is busy or AI failed to format JSON. Please try again."
