@@ -11,10 +11,7 @@ import logging
 import json
 
 # --- 1. SETUP LOGGING & CONFIG ---
-logging.basicConfig(
-    level=logging.INFO, 
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Get Gemini Key
 try:
@@ -32,36 +29,29 @@ model = genai.GenerativeModel("gemini-2.5-flash")
 # --- 2. SECURITY CONFIGURATION (THE LOCK) 🔒 ---
 API_KEY_NAME = "X-Service-Token"
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
-
-# The Secret Password
 INTERNAL_TOKEN = os.getenv("INTERNAL_TOKEN", "SWARAJ_SECURE_2026")
 
 async def get_api_key(api_key_header: str = Security(api_key_header)):
     if api_key_header == INTERNAL_TOKEN:
         return api_key_header
     else:
-        raise HTTPException(
-            status_code=403, 
-            detail="⛔ Access Forbidden: Invalid or Missing Service Token"
-        )
+        raise HTTPException(status_code=403, detail="⛔ Access Forbidden: Invalid Token")
 
-# --- 3. INITIALIZE APP & LIMITER (FIXED) ---
+# --- 3. INITIALIZE APP & LIMITER ---
 app = FastAPI()
-
-# Setup the Bouncer (Rate Limiter)
 limiter = Limiter(key_func=get_remote_address)
-app.state.limiter = limiter # <--- MISSING LINE 1: Connect Bouncer to App
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler) # <--- MISSING LINE 2: Handle the error
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # --- 4. DATA MODELS ---
 class CodeRequest(BaseModel):
     code: str
-    task: str = "fix_python" # Default
+    task: str = "fix_python"
 
     @field_validator('code')
     def check_code_not_empty(cls, v):
         if not v.strip():
-            raise ValueError('Code cannot be empty/blank!')
+            raise ValueError('Code cannot be empty!')
         return v
 
 # --- 5. ENDPOINTS ---
@@ -80,7 +70,6 @@ def review_code(request: Request, code_request: CodeRequest):
         "fix_cpp": "Fix this C++ code. Explain the bugs.",
         "fix_go": "Fix this Go code. Explain the bugs.",
     }
-    
     instruction = prompts.get(code_request.task, "Fix this code.")
 
     prompt = f"""
@@ -106,10 +95,7 @@ def review_code(request: Request, code_request: CodeRequest):
             logging.error(f"Error: {e}")
             attempts += 1
             
-    return {
-        "fixed_code": code_request.code,
-        "bug_report": "Server is busy or AI failed to format JSON."
-    }
+    return {"fixed_code": code_request.code, "bug_report": "Server busy. Try again."}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
